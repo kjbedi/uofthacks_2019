@@ -1,6 +1,15 @@
 import flask
 import simplejson as json
 from json import JSONEncoder
+from bson.json_util import dumps
+
+import pymongo
+myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+mydb = myclient["mydatabase"]
+mycol = mydb["items"]
+
+
+
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
@@ -24,12 +33,21 @@ class ClothingManager:
     item_position = ""
 
     def add(self, name, position, pic):
+
         self.item_number = self.item_number + 1
         item = Item(position, pic, name)
+        add_to_db(item)
         self.clothing_item[self.item_number] = item
+        add_to_db(item)
 
     def get_all_items(self):
-        return self.clothing_item
+        # return self.clothing_item
+        return mycol.find()
+
+
+def add_to_db(item):
+    mydict = {"name": item.name, "position": item.item_position, "picture": item.picture}
+    x = mycol.insert_one(mydict)
 
 
 def create_item(pos, pic):
@@ -59,9 +77,8 @@ def home():
     c1.add("boot", "shoes", "random")
     c1.add("boot", "shoes", "random")
 
-
-
-    return MyEncoder().encode(c1.get_all_items())
+    # return MyEncoder().encode(c1.get_all_items())
+    return dumps(c1.get_all_items())
 
 
 @app.route('/test', methods=['GET'])
